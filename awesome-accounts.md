@@ -7,6 +7,7 @@ These are some awesome github usernames
  * [erclee2000](https://github.com/erclee2000)
  * [AlexaDaniels25](https://github.com/AlexaDaniels25)
  * [camillamosher] (https://github.com/camillamosher)
+ * [JoeyShibata](https://github.com/JoeyShibata)
 
 
 ## Teams

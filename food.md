@@ -1,3 +1,4 @@
 - Tacos (duh)
 - Pizza
+- Chili
 - Clementimes
