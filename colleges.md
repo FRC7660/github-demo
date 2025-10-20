@@ -4,3 +4,4 @@
 - Indiana
 - Saint Joseph's College
 - U.C. Davis
+- Michigan
