@@ -2,3 +2,5 @@
 - Pizza
 - Clementimes
 - Fried Chicken
+- rice
+
