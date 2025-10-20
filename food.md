@@ -1,4 +1,6 @@
 - Tacos (duh)
 - Pizza
 - Clementimes
-rice
+- Fried Chicken
+- rice
+
