@@ -8,6 +8,8 @@
 - superman
 - cherry
 - chocolate gelato
+- Coffee
 - Moose tracks
 - Sea salt carmal
 - Mint Chocolate Chip
+- Chocolate Chip
