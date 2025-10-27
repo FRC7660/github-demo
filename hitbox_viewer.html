@@ -1,0 +1,139 @@
+
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Hitbox Viewer</title>
+<style>html,body{height:100%;margin:0}canvas{display:block;background:#111}</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const hitboxes = [{"type": "rect", "x": 100, "y": 100, "w": 32, "h": 48}, {"type": "circle", "x": 216, "y": 110, "r": 8}, {"type": "rect", "x": 120, "y": 100, "w": 24, "h": 24}];
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  draw();
+}
+window.addEventListener('resize', resize, false);
+function boundsOf(h) {
+  if (h.type === 'rect') {
+    return [h.x - h.w/2, h.y - h.h/2, h.x + h.w/2, h.y + h.h/2];
+  } else {
+    return [h.x - h.r, h.y - h.r, h.x + h.r, h.y + h.r];
+  }
+}
+function computeView() {
+  let minx=Infinity,miny=Infinity,maxx=-Infinity,maxy=-Infinity;
+  for (const h of hitboxes) {
+    const b = boundsOf(h);
+    minx = Math.min(minx, b[0]); miny = Math.min(miny, b[1]);
+    maxx = Math.max(maxx, b[2]); maxy = Math.max(maxy, b[3]);
+  }
+  if (!isFinite(minx)) { minx=miny=0; maxx=100; maxy=100; }
+  return {minx, miny, maxx, maxy};
+}
+function toCanvasX(x, view) {
+  const pad = 20;
+  const sx = (canvas.width - pad*2) / (view.maxx - view.minx || 1);
+  return pad + (x - view.minx) * sx;
+}
+function toCanvasY(y, view) {
+  const pad = 20;
+  const sy = (canvas.height - pad*2) / (view.maxy - view.miny || 1);
+  // flip Y so that increasing y goes down (keeps original coords)
+  return pad + (y - view.miny) * sy;
+}
+
+// collision helpers (same logic as Python)
+function rect_vs_rect(a,b){
+  const [al,at,ar,ab] = [a.x-a.w/2,a.y-a.h/2,a.x+a.w/2,a.y+a.h/2];
+  const [bl,bt,br,bb] = [b.x-b.w/2,b.y-b.h/2,b.x+b.w/2,b.y+b.h/2];
+  if (ar < bl || br < al) return false;
+  if (ab < bt || bb < at) return false;
+  return true;
+}
+function circle_vs_circle(a,b){
+  const dx = a.x - b.x, dy = a.y - b.y;
+  const rs = a.r + b.r;
+  return dx*dx + dy*dy <= rs*rs;
+}
+function rect_vs_circle(rect,circ){
+  const left = rect.x - rect.w/2, top = rect.y - rect.h/2;
+  const right = rect.x + rect.w/2, bottom = rect.y + rect.h/2;
+  const closest_x = Math.max(left, Math.min(circ.x, right));
+  const closest_y = Math.max(top, Math.min(circ.y, bottom));
+  const dx = circ.x - closest_x, dy = circ.y - closest_y;
+  return dx*dx + dy*dy <= circ.r*circ.r;
+}
+
+function intersects(a,b){
+  if (a.type === 'rect' && b.type === 'rect') return rect_vs_rect(a,b);
+  if (a.type === 'circle' && b.type === 'circle') return circle_vs_circle(a,b);
+  if (a.type === 'rect' && b.type === 'circle') return rect_vs_circle(a,b);
+  if (a.type === 'circle' && b.type === 'rect') return rect_vs_circle(b,a);
+  return false;
+}
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const view = computeView();
+  // draw grid
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
+  for (let i=0;i<10;i++){
+    const t = i/9;
+    ctx.beginPath();
+    ctx.moveTo(0, t*canvas.height);
+    ctx.lineTo(canvas.width, t*canvas.height);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(t*canvas.width, 0);
+    ctx.lineTo(t*canvas.width, canvas.height);
+    ctx.stroke();
+  }
+  // detect collisions
+  const colliding = new Set();
+  for (let i=0;i<hitboxes.length;i++) for (let j=i+1;j<hitboxes.length;j++) {
+    if (intersects(hitboxes[i], hitboxes[j])) {
+      colliding.add(i); colliding.add(j);
+    }
+  }
+
+  // draw hitboxes
+  for (let i=0;i<hitboxes.length;i++) {
+    const h = hitboxes[i];
+    const isColl = colliding.has(i);
+    if (h.type === 'rect') {
+      const cx = toCanvasX(h.x, view), cy = toCanvasY(h.y, view);
+      const cw = Math.abs(toCanvasX(h.x + h.w/2, view) - toCanvasX(h.x - h.w/2, view));
+      const ch = Math.abs(toCanvasY(h.y + h.h/2, view) - toCanvasY(h.y - h.h/2, view));
+      ctx.fillStyle = isColl ? 'rgba(255,60,60,0.4)' : 'rgba(60,160,255,0.25)';
+      ctx.strokeStyle = isColl ? 'rgba(255,60,60,0.9)' : 'rgba(60,160,255,0.9)';
+      ctx.lineWidth = 2;
+      ctx.fillRect(cx - cw/2, cy - ch/2, cw, ch);
+      ctx.strokeRect(cx - cw/2, cy - ch/2, cw, ch);
+    } else {
+      const cx = toCanvasX(h.x, view), cy = toCanvasY(h.y, view);
+      const cr = Math.abs(toCanvasX(h.x + h.r, view) - toCanvasX(h.x, view));
+      ctx.beginPath();
+      ctx.fillStyle = isColl ? 'rgba(255,180,60,0.35)' : 'rgba(180,255,120,0.2)';
+      ctx.strokeStyle = isColl ? 'rgba(255,180,60,0.95)' : 'rgba(180,255,120,0.95)';
+      ctx.lineWidth = 2;
+      ctx.arc(cx, cy, cr, 0, Math.PI*2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    // label
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px sans-serif';
+    ctx.fillText(String(i), toCanvasX(h.x, view)+6, toCanvasY(h.y, view)-6);
+  }
+}
+
+resize();
+draw();
+</script>
+</body>
+</html>
