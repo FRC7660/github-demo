@@ -12,3 +12,6 @@ if dice ==5:
     print("YOU WON !!!")
 else:
     print("you lost :(")
+
+if dice ==6:
+    print("YOU ALOMST WON ^_^")
