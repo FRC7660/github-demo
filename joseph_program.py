@@ -1,27 +1,30 @@
 import sys
 
-#!/usr/bin/env python3
+def parse_number(s):
+    try:
+        return int(s)
+    except ValueError:
+        try:
+            return float(s)
+        except ValueError:
+            raise ValueError(f"Invalid number: {s!r}")
 
 def main():
     if len(sys.argv) >= 3:
-        a, b ,c = sys.argv[1], sys.argv[2]
+        a_str, b_str = sys.argv[1], sys.argv[2]
     else:
-        a = input("Enter first number: ")
-        b = input("Enter second number: ")
-        c = input("Enter third number: ")
+        a_str = input("Enter first number: ").strip()
+        b_str = input("Enter second number: ").strip()
+
     try:
-        a_num = float(a)
-        b_num = float(b)
-        c_num = float(c)
-    except ValueError:
-        print("Invalid number input.")
+        a = parse_number(a_str)
+        b = parse_number(b_str)
+    except ValueError as e:
+        print(e)
         sys.exit(1)
 
-    result = a_num + b_num + c_num
-    # print as int when it's a whole number
-    if result.is_integer():
-        result = int(result)
-    print(result)
+    product = a * b
+    print(product)
 
 if __name__ == "__main__":
     main()
